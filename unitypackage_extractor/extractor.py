@@ -7,7 +7,7 @@ import shutil
 import re
 from pathlib import Path
 
-def extractPackage(packagePath, outputPath=None, encoding='utf-8'):
+def extractPackage(packagePath, outputPath=None, encoding='utf-8', with_meta=False):
   """
   Extracts a .unitypackage into the current directory
   @param {string} packagePath The path to the .unitypackage
@@ -24,9 +24,14 @@ def extractPackage(packagePath, outputPath=None, encoding='utf-8'):
     # Extract each file in tmpDir to final destination
     for dirEntry in os.scandir(tmpDir):
       assetEntryDir = f"{tmpDir}/{dirEntry.name}"
+      has_meta = False
       if not os.path.exists(f"{assetEntryDir}/pathname") or \
           not os.path.exists(f"{assetEntryDir}/asset"):
         continue #Doesn't have the required files to extract it
+      if with_meta:
+          meta_path = f"{assetEntryDir}/asset.meta"
+          if os.path.exists(meta_path):
+              has_meta = True
 
       # Has the required info to extract
       # Get the path to output to from /pathname
@@ -48,6 +53,12 @@ def extractPackage(packagePath, outputPath=None, encoding='utf-8'):
       os.makedirs(os.path.dirname(assetOutPath), exist_ok=True) #Make the dirs up to the given folder
       shutil.move(f"{assetEntryDir}/asset", assetOutPath)
 
+      if with_meta and has_meta:
+          print(f"Extracting '{dirEntry.name}' .meta as '{pathname}.meta'")
+          metaOutPath = os.path.join(outputPath, pathname+'.meta')
+          os.makedirs(os.path.dirname(assetOutPath), exist_ok=True) #Make the dirs up to the given folder
+          shutil.move(f"{assetEntryDir}/asset.meta", metaOutPath)
+
 def cli(args):
   """
   CLI entrypoint, takes CLI arguments array
@@ -55,7 +66,10 @@ def cli(args):
   if not args:
     raise TypeError("No .unitypackage path was given. \n\nUSAGE: unitypackage_extractor [XXX.unitypackage] (optional/output/path)")
   startTime = time.time()
-  extractPackage(args[0], args[1] if len(args) > 1 else "")
+  with_meta = True if "--with-meta" in args else False
+  if with_meta:
+      print("extract .meta files")
+  extractPackage(args[0], args[1] if len(args) > 1 else "", with_meta=with_meta)
   print("--- Finished in %s seconds ---" % (time.time() - startTime))
 
 if __name__ == "__main__":
