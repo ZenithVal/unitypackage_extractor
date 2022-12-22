@@ -25,9 +25,11 @@ def extractPackage(packagePath, outputPath=None, encoding='utf-8', with_meta=Fal
     for dirEntry in os.scandir(tmpDir):
       assetEntryDir = f"{tmpDir}/{dirEntry.name}"
       has_meta = False
-      if not os.path.exists(f"{assetEntryDir}/pathname") or \
-          not os.path.exists(f"{assetEntryDir}/asset"):
+      is_dir = False
+      if not os.path.exists(f"{assetEntryDir}/pathname"):
         continue #Doesn't have the required files to extract it
+      if not os.path.exists(f"{assetEntryDir}/asset"):
+          is_dir = True
       if with_meta:
           meta_path = f"{assetEntryDir}/asset.meta"
           if os.path.exists(meta_path):
@@ -49,9 +51,10 @@ def extractPackage(packagePath, outputPath=None, encoding='utf-8', with_meta=Fal
         continue
 
       #Extract to the pathname
-      print(f"Extracting '{dirEntry.name}' as '{pathname}'")
-      os.makedirs(os.path.dirname(assetOutPath), exist_ok=True) #Make the dirs up to the given folder
-      shutil.move(f"{assetEntryDir}/asset", assetOutPath)
+      if not is_dir:
+          print(f"Extracting '{dirEntry.name}' as '{pathname}'")
+          os.makedirs(os.path.dirname(assetOutPath), exist_ok=True) #Make the dirs up to the given folder
+          shutil.move(f"{assetEntryDir}/asset", assetOutPath)
 
       if with_meta and has_meta:
           print(f"Extracting '{dirEntry.name}' .meta as '{pathname}.meta'")
