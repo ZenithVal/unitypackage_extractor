@@ -10,7 +10,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        architecture: [x86, x64]
+        architecture: [x64]
 
     steps:
       - uses: actions/checkout@v2
